@@ -1,0 +1,68 @@
+name: Docs Staleness
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"  # Every Monday at 09:00 UTC
+  push:
+    paths:
+      - "docs/**"
+      - "scripts/**"
+      # In other repos, add application code paths here (e.g., src/**, lib/**)
+      # so path-based staleness is detected when code changes.
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  staleness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git log --since
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run staleness check
+        id: staleness
+        run: |
+          python scripts/agents/check-staleness.py --dry-run > staleness-output.json
+          if [ -s staleness-output.json ] && [ "$(cat staleness-output.json)" != "[]" ]; then
+            echo "has_stale=true" >> "$GITHUB_OUTPUT"
+            echo "Stale docs found:"
+            cat staleness-output.json
+          else
+            echo "has_stale=false" >> "$GITHUB_OUTPUT"
+            echo "No stale docs."
+          fi
+
+      - name: Regenerate AGENTS.md index
+        run: python scripts/agents/build-index.py --staleness-report staleness-output.json
+
+      - name: Create pull request
+        if: steps.staleness.outputs.has_stale == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "[agents] staleness report ${{ github.run_id }}"
+          body: |
+            Automated staleness check found docs that may need review.
+
+            See the staleness report below. For each flagged doc, review the content,
+            confirm it is still accurate, update `lastValidated` in the frontmatter,
+            and merge this PR.
+
+            ```json
+            $(cat staleness-output.json)
+            ```
+          branch: agents/staleness-${{ github.run_id }}
+          labels: agents-staleness
+          commit-message: "chore: flag stale docs in AGENTS.md"

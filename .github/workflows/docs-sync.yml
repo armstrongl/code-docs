@@ -1,0 +1,82 @@
+name: Docs Sync
+
+on:
+  push:
+    paths:
+      - "docs/**"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Identify changed docs
+        id: changed
+        run: |
+          FILES=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD -- 'docs/*.md' | tr '\n' ' ')
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          if [ -z "$FILES" ]; then
+            echo "No doc files changed."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Changed files: $FILES"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run Claude Code frontmatter update
+        id: claude
+        if: steps.changed.outputs.skip == 'false'
+        continue-on-error: true
+        run: |
+          claude \
+            --task-file .github/agents/frontmatter-prompt.md \
+            --allowedTools "Edit,Read" \
+            --no-interactive \
+            --output-format json
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
+
+      - name: Check Claude Code result
+        if: steps.claude.outcome == 'failure'
+        run: |
+          echo "::warning::Claude Code frontmatter update failed. Continuing with index regeneration."
+
+      - name: Set up Python
+        if: steps.changed.outputs.skip == 'false'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        if: steps.changed.outputs.skip == 'false'
+        run: pip install -r requirements.txt
+
+      - name: Regenerate AGENTS.md index
+        if: steps.changed.outputs.skip == 'false'
+        run: python scripts/agents/build-index.py
+
+      - name: Create pull request
+        if: steps.changed.outputs.skip == 'false'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "[agents] sync frontmatter and index"
+          body: |
+            Automated sync triggered by changes to docs/.
+
+            **Changed files:** ${{ steps.changed.outputs.files }}
+
+            Review the generated `description` fields to verify they are accurate trigger conditions.
+          branch: agents/sync-${{ github.sha }}
+          base: ${{ github.ref_name }}
+          labels: agents-sync
+          commit-message: "chore: sync frontmatter and regenerate AGENTS.md index"
