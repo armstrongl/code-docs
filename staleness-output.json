@@ -1,0 +1,42 @@
+[
+  {
+    "file": "docs/agents-md-structure.md",
+    "title": "AGENTS.md structure",
+    "reason": "paths",
+    "details": [
+      "2 commit(s) touching tracked paths since 2026-03-12"
+    ],
+    "lastValidated": "2026-03-12",
+    "maxAgeDays": 90
+  },
+  {
+    "file": "docs/automation-workflow.md",
+    "title": "Automation workflow",
+    "reason": "paths",
+    "details": [
+      "2 commit(s) touching tracked paths since 2026-03-12"
+    ],
+    "lastValidated": "2026-03-12",
+    "maxAgeDays": 90
+  },
+  {
+    "file": "docs/frontmatter-schema.md",
+    "title": "Frontmatter schema",
+    "reason": "paths",
+    "details": [
+      "3 commit(s) touching tracked paths since 2026-03-12"
+    ],
+    "lastValidated": "2026-03-12",
+    "maxAgeDays": 90
+  },
+  {
+    "file": "docs/llm-prompt-design-claude.md",
+    "title": "LLM prompt design for Claude Code",
+    "reason": "paths",
+    "details": [
+      "1 commit(s) touching tracked paths since 2026-03-12"
+    ],
+    "lastValidated": "2026-03-12",
+    "maxAgeDays": 90
+  }
+]
