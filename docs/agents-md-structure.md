@@ -14,7 +14,7 @@ title: "AGENTS.md structure"
 
 # AGENTS.md structure
 
-AGENTS.md is the entry point for every agent that works in the repo. It tells agents what documentation exists, when to load each doc, and how to navigate the repo. The `build-index.py` script generates and maintains the index table automatically. The preamble and repo-level context sections are human-authored and protected from regeneration.
+AGENTS.md is the entry point for every agent that works in the repo. Agents use it to find available documentation and decide what to load for a given task. The `build-index.py` script generates and maintains the index table automatically. The preamble and repo-level context sections are human-authored and protected from regeneration.
 
 ---
 
@@ -40,7 +40,7 @@ A good preamble covers three things in order:
 2. That the index table below lists all available documentation.
 3. That the agent should read the `description` column of each row and load only docs that are relevant to the current task.
 
-A poor preamble restates obvious instructions, documents the schema, or tries to cover edge cases. That content belongs in individual docs, not in a file that is loaded on every session.
+A poor preamble tries to document the schema or cover edge cases. That content belongs in individual docs, not in a file that is loaded on every session.
 
 **Example preamble:**
 

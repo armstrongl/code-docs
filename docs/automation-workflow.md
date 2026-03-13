@@ -95,9 +95,9 @@ The cron handles time-based staleness. The push trigger handles path-based stale
 
 The staleness script (`scripts/agents/check-staleness.py`) reads all frontmatter in `docs/` and checks two conditions for each doc:
 
-**Time-based:** Compare today's date against `lastValidated + maxAgeDays`. If the doc is past its threshold, flag it as stale. The `maxAgeDays` value comes from the doc's frontmatter or, if absent, from the `defaults.maxAgeDays` value in `.agentsrc.yaml`.
+Time-based: Compare today's date against `lastValidated + maxAgeDays`. If the doc is past its threshold, flag it as stale. The `maxAgeDays` value comes from the doc's frontmatter or, if absent, from the `defaults.maxAgeDays` value in `.agentsrc.yaml`.
 
-**Path-based:** Run `git log --since=<lastValidated> -- <paths>` for each doc that has a `paths` field. If any commits exist against those paths since `lastValidated`, flag the doc as path-stale regardless of whether the time threshold has been reached.
+Path-based: Run `git log --since=<lastValidated> -- <paths>` for each doc that has a `paths` field. If any commits exist against those paths since `lastValidated`, flag the doc as path-stale regardless of whether the time threshold has been reached.
 
 The script produces a JSON report of all flagged docs, which `build-index.py` uses to set the `status` column in AGENTS.md:
 

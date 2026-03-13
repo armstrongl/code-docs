@@ -17,8 +17,6 @@ title: "LLM prompt design for Claude Code"
 
 Claude Code runs in CI as the agent responsible for writing and updating LLM-owned frontmatter fields whenever a file in `docs/` is added or modified. It reads the document content, the existing frontmatter, and the repo config, then edits the file in place using its file editing tools. No separate `update-frontmatter.py` script or `llm.py` wrapper is needed. The GitHub Actions workflow invokes Claude Code directly and commits the result.
 
-This document covers how Claude Code is invoked, what the task prompt instructs it to do, and the full ready-to-use prompt text.
-
 ---
 
 ## Overview
@@ -69,7 +67,7 @@ The task prompt is a Markdown file stored at `.github/agents/frontmatter-prompt.
 
 ### Context section
 
-The context section tells Claude Code what it is, what it is doing, and what success looks like. It also states the hard ownership boundaries up front so they are the first thing the model reads.
+The context section establishes Claude Code's role, task, and success criteria. It also states the hard ownership boundaries up front so they are the first thing the model reads.
 
 ### Rules section
 
@@ -151,15 +149,15 @@ Within the Edit tool, Claude Code is instructed in the prompt to:
 
 The following edge cases are addressed explicitly in the task prompt.
 
-**Empty document:** If the document body contains no content below the frontmatter, Claude Code generates a minimal description based on the title alone and sets `tags` to an empty list. It does not fabricate content.
+Empty document: If the document body contains no content below the frontmatter, Claude Code generates a minimal description based on the title alone and sets `tags` to an empty list. It does not fabricate content.
 
-**Very short document:** If the document body is fewer than 50 words, Claude Code generates the description from what is available. It does not infer or expand on what is not written.
+Very short document: If the document body is fewer than 50 words, Claude Code generates the description from what is available. It does not infer or expand on what is not written.
 
-**No clear code relationship:** If the document has no apparent relationship to specific code paths (for example, an onboarding guide or architectural overview), Claude Code leaves `paths` as an empty list rather than guessing. It never populates `paths` with speculative values.
+No clear code relationship: If the document has no apparent relationship to specific code paths (for example, an onboarding guide or architectural overview), Claude Code leaves `paths` as an empty list rather than guessing. It never populates `paths` with speculative values.
 
-**Frontmatter already complete:** If all LLM-owned fields are populated, Claude Code makes no changes to the file and exits cleanly.
+Frontmatter already complete: If all LLM-owned fields are populated, Claude Code makes no changes to the file and exits cleanly.
 
-**Malformed existing frontmatter:** If the existing frontmatter cannot be parsed as valid YAML, Claude Code writes a note to stdout and skips the file rather than attempting a repair. The workflow treats a skipped file as a soft failure and includes it in the PR body as a warning.
+Malformed existing frontmatter: If the existing frontmatter cannot be parsed as valid YAML, Claude Code writes a note to stdout and skips the file rather than attempting a repair. The workflow treats a skipped file as a soft failure and includes it in the PR body as a warning.
 
 ---
 

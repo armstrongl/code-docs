@@ -22,7 +22,7 @@ The system proposed here is built on three components that work together:
 - A frontmatter schema that gives each doc a machine-readable identity: what it covers, when an agent should load it, and which code paths it describes.
 - An `AGENTS.md` file at the repo root that serves as a lazy-load index. Agents read this file first, scan the index, and load only the docs relevant to their current task.
 
-The system is intentionally minimal. It uses standard Markdown, YAML frontmatter, GitHub Actions, and a provider-agnostic LLM API call. It has no runtime dependencies, no external services, and no proprietary tooling. It can be stamped onto any repo in under an hour.
+The system is intentionally minimal. It uses standard Markdown, YAML frontmatter, GitHub Actions, and a provider-agnostic LLM API call. It has no runtime dependencies and no external services. It can be stamped onto any repo in under an hour.
 
 ## How it works
 
@@ -83,21 +83,21 @@ The second workflow, `docs-staleness.yml`, runs on a daily schedule and on any p
 
 Several explicit decisions shaped the system.
 
-**Lazy loading over eager loading.** Agents read the index first and load individual docs on demand. This keeps token usage proportional to task complexity rather than repo size. A repo with fifty docs does not cost fifty docs worth of context on every session.
+Lazy loading over eager loading. Agents read the index first and load individual docs on demand. This keeps token usage proportional to task complexity rather than repo size. A repo with fifty docs does not cost fifty docs worth of context on every session.
 
-**Description as trigger, not summary.** The `description` field is written as a load condition: "Load when [conditions]." This is a small but important distinction. A summary tells an agent what a doc contains. A trigger condition tells an agent when to care. The latter is what enables reliable lazy loading.
+Description as trigger, not summary. The `description` field is written as a load condition: "Load when [conditions]." This is a small but important distinction. A summary describes content; a trigger condition drives a load-or-skip decision. The latter is what enables reliable lazy loading.
 
-**Automation owns generation, humans own validation.** The LLM generates `title`, `description`, `paths`, and `tags` on doc creation. It never overwrites them after that, and it never touches `lastValidated` or `maxAgeDays`. Those fields belong to humans. This division means the system can run without human involvement for routine changes while keeping humans in the loop for anything that affects accuracy.
+Automation owns generation, humans own validation. The LLM generates `title`, `description`, `paths`, and `tags` on doc creation. It never overwrites them after that, and it never touches `lastValidated` or `maxAgeDays`. Those fields belong to humans. This division means the system can run without human involvement for routine changes while keeping humans in the loop for anything that affects accuracy.
 
-**Provider-agnostic by design.** The LLM call is abstracted behind a thin wrapper that maps to either the Anthropic Messages API or any OpenAI-compatible endpoint. Swapping providers requires changing two environment variables, not rewriting scripts.
+Provider-agnostic by design. The LLM call is abstracted behind a thin wrapper that maps to either the Anthropic Messages API or any OpenAI-compatible endpoint. Swapping providers requires changing two environment variables, not rewriting scripts.
 
-**Co-located with code.** Docs live in the repo alongside the code they describe. They appear in pull requests, code reviews, and git history. They go stale on the same timeline as the code. This is a deliberate choice against external wikis, which drift silently because they are not part of the development workflow.
+Co-located with code. Docs live in the repo alongside the code they describe. They appear in pull requests, code reviews, and git history. They go stale on the same timeline as the code. This is a deliberate choice against external wikis, which drift silently because they are not part of the development workflow.
 
 ## What you get
 
-A repo with this system in place gives agents a reliable, low-cost way to orient themselves before starting work. An agent reading AGENTS.md can scan the full index in a fraction of the tokens required to read the underlying docs, load only what is relevant, and proceed with accurate context.
+A repo with this system in place gives agents a reliable, low-cost way to orient themselves before starting work. An agent reading AGENTS.md can scan the full index in a fraction of the tokens required to read the underlying docs, then load only what is relevant to the current task.
 
-For humans, the system surfaces documentation gaps in pull requests, keeps freshness visible in a single file, and requires no new tooling or platforms to maintain. The automation handles the mechanical work. Humans handle the judgment calls.
+For humans, the system surfaces documentation gaps in pull requests and keeps freshness visible in a single file.
 
 The system is designed to be stamped onto new repos with minimal setup: copy two workflow files, copy the scripts directory, add a `.agentsrc.yaml` with a default staleness threshold, and add an `AGENTS.md` with a preamble. No configuration beyond that is required to get the automation running.
 
@@ -107,13 +107,13 @@ For organizations with multiple repos, the same index-building script can aggreg
 
 No system is free. A few honest tradeoffs are worth naming.
 
-**Description quality depends on the LLM.** A poorly generated `description` either prevents a relevant doc from being loaded or loads an irrelevant one. The prompt design and validation rules mitigate this, but they don't eliminate it. Human review of generated descriptions on first creation is the strongest safeguard, even though the system is designed to not require it.
+Description quality depends on the LLM. A poorly generated `description` either prevents a relevant doc from being loaded or loads an irrelevant one. The prompt design and validation rules mitigate this, but they don't eliminate it. Human review of generated descriptions on first creation is the strongest safeguard, even though the system is designed to not require it.
 
-**`lastValidated` depends on human discipline.** The staleness system surfaces docs that may need attention, but it cannot validate them. A human has to read the doc, confirm it is accurate, and update the date. If that habit doesn't form, the staleness signals eventually become noise.
+`lastValidated` depends on human discipline. The staleness system surfaces docs that may need attention, but it cannot validate them. A human has to read the doc, confirm it is accurate, and update the date. If that habit doesn't form, the staleness signals eventually become noise.
 
-**The system doesn't scale to very large doc sets without further tooling.** At a few dozen docs, scanning the AGENTS.md index is fast and cheap. At several hundred docs, agents may benefit from tag-based or semantic filtering before scanning the full table. That layer is not part of this proposal and would add complexity.
+The system doesn't scale to very large doc sets without further tooling. At a few dozen docs, scanning the AGENTS.md index is fast and cheap. At several hundred docs, agents may benefit from tag-based or semantic filtering before scanning the full table. That layer is not part of this proposal and would add complexity.
 
-**The `description` field is immutable after creation.** This is intentional, but it means a doc that is substantially rewritten can have a description that no longer reflects its content. There is currently no automated signal for this. A human editing a doc significantly should review and manually update the description.
+The `description` field is immutable after creation. This is intentional, but it means a doc that is substantially rewritten can have a description that no longer reflects its content. There is currently no automated signal for this. A human editing a doc significantly should review and manually update the description.
 
 ## Detailed specs
 
