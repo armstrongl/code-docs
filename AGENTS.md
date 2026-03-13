@@ -17,11 +17,13 @@ working in is undocumented. Note this if it affects your ability to complete
 the task accurately.
 
 <!-- AGENTS-INDEX-START -->
+
 | Doc | When to load | Last validated | Status | Paths |
-|---|---|---|---|---|
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | -------------- | ------- | ------------------------------------------------------------------------- |
 | [AGENTS.md structure](docs/agents-md-structure.md) | Load when editing AGENTS.md preamble, modifying the index table format, or updating build-index.py. | 2026-03-12 | current | `AGENTS.md`<br>`scripts/agents/build-index.py` |
 | [Automation workflow](docs/automation-workflow.md) | Load when modifying GitHub Actions workflows, debugging CI runs, or changing staleness detection logic. | 2026-03-12 | current | `.github/workflows/**`<br>`scripts/agents/**` |
 | [Frontmatter schema](docs/frontmatter-schema.md) | Load when authoring new docs, reviewing frontmatter validation, or modifying the build-index script. | 2026-03-12 | current | `docs/**`<br>`scripts/agents/build-index.py`<br>`.agentsrc.yaml` |
-| [LLM prompt design (provider-agnostic)](docs/llm-prompt-design-agnostic.md) | Load when implementing a provider-agnostic LLM layer or porting frontmatter generation to non-Claude providers. | 2026-03-12 | current | |
+| [LLM prompt design (provider-agnostic)](docs/llm-prompt-design-agnostic.md) | Load when implementing a provider-agnostic LLM layer or porting frontmatter generation to non-Claude providers. | 2026-03-12 | current |  |
 | [LLM prompt design for Claude Code](docs/llm-prompt-design-claude.md) | Load when modifying the Claude Code task prompt, adjusting CI frontmatter generation, or debugging LLM output. | 2026-03-12 | current | `.github/agents/**`<br>`.github/workflows/docs-sync.yml` |
+
 <!-- AGENTS-INDEX-END -->

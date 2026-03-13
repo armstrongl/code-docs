@@ -116,11 +116,11 @@ def replace_index_in_file(filepath: str, table: str) -> None:
             re.DOTALL,
         )
         new_content = pattern.sub(
-            f"{START_MARKER}\n{table}{END_MARKER}",
+            f"{START_MARKER}\n\n{table}\n{END_MARKER}",
             content,
         )
     else:
-        new_content = content.rstrip() + f"\n\n{START_MARKER}\n{table}{END_MARKER}\n"
+        new_content = content.rstrip() + f"\n\n{START_MARKER}\n\n{table}\n{END_MARKER}\n"
 
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(new_content)
