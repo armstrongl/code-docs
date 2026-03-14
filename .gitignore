@@ -1,4 +1,4 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-staleness-report.json
+staleness-output.json
