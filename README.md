@@ -1,34 +1,22 @@
 # In-repo documentation for humans and agents
 
-Most repos have a documentation problem that gets worse as the codebase grows. Knowledge about how the system works, why decisions were made, and how to navigate the code lives in wikis, READMEs, Slack threads, and people's heads. Humans rediscover it slowly. AI agents and coding assistants don't find it at all.
+[![CI](https://GitHub.com/armstrongl/code-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/armstrongl/code-docs/actions/workflows/ci.yml) [![Docs Sync](https://GitHub.com/armstrongl/code-docs/actions/workflows/docs-sync.yml/badge.svg)](https://github.com/armstrongl/code-docs/actions/workflows/docs-sync.yml) [![Docs Staleness](https://GitHub.com/armstrongl/code-docs/actions/workflows/docs-staleness.yml/badge.svg)](https://github.com/armstrongl/code-docs/actions/workflows/docs-staleness.yml)
 
-This is a proposal for a lightweight, in-repo documentation system designed to serve both audiences from the ground up, with minimal maintenance overhead and no proprietary tooling.
+Most repos have a documentation problem that gets worse as the codebase grows. Knowledge about how the system works, why decisions were made, and what to watch out for ends up in Slack threads, wikis, and people's heads. Humans find it eventually. AI agents don't.
 
-## The problem
-
-When an AI agent starts working in a repo, it has no institutional memory. It reads what is in front of it. If the repo has a README, the agent reads that. If there are inline comments, it reads those. Everything else, the architectural decisions, the known gotchas, the conventions that aren't enforced by linting, is invisible.
-
-Humans have the same problem, just more slowly. A new team member reads the README, asks questions, and gradually builds a mental model. That process takes weeks. An agent can't ask questions the same way, and it starts from zero every session.
-
-Existing solutions don't bridge this gap well. Wikis are external to the repo and drift out of sync with the code. Long READMEs are loaded in full regardless of relevance, which wastes context window and buries useful signal. Inline comments are scoped to individual files, not workflows or systems. None of these are designed with agents in mind.
-
----
-
-## The idea
-
-The system proposed here is built on three components that work together:
-
-- A `docs/` folder at the repo root containing Markdown files, each covering a specific topic, workflow, or area of the codebase.
-- A frontmatter schema that gives each doc a machine-readable identity: what it covers, when an agent should load it, and which code paths it describes.
-- An `AGENTS.md` file at the repo root that serves as a lazy-load index. Agents read this file first, scan the index, and load only the docs relevant to their current task.
-
-The system is intentionally minimal. It uses standard Markdown, YAML frontmatter, GitHub Actions, and a provider-agnostic LLM API call. It has no runtime dependencies and no external services. It can be stamped onto any repo in under an hour.
+This is a proposal for a lightweight, in-repo documentation system designed to serve both audiences, with no proprietary tooling and minimal maintenance overhead.
 
 ## How it works
 
+The system has three parts that work together:
+
+- A `docs/` folder at the repo root, where each file covers a specific topic, workflow, or area of the codebase.
+- A frontmatter schema that gives each doc a machine-readable identity: what it covers, when an agent should load it, and which code paths it describes.
+- An `AGENTS.md` file at the repo root that acts as a lazy-load index. Agents read it first, scan the table, and load only the docs relevant to their current task.
+
 ### Docs
 
-Each file in `docs/` is a standard Markdown document with a YAML frontmatter block. A typical doc looks like this:
+Each file in `docs/` has a YAML frontmatter block. The `description` field is the most important part. It's written as a trigger condition, not a topic summary, so an agent can make a load-or-skip decision without reading the doc itself.
 
 ```markdown
 ---
@@ -43,84 +31,65 @@ tags:
   - auth
   - security
 ---
-
-# Authentication flow
-
-...
 ```
 
-The frontmatter is the doc's machine-readable identity. The `description` field is the most important piece. It is written as a trigger condition, not a topic summary, so an agent can make a load-or-skip decision without reading the doc itself. The `paths` field links the doc to specific areas of the codebase, which enables staleness detection when those paths change.
+The `paths` field links the doc to specific areas of the codebase, which enables staleness detection when those paths change.
 
 ### AGENTS.md
 
-`AGENTS.md` is the entry point for every agent session. It contains a short preamble that orients the agent, instructions for how to use the index, and a generated table with one row per doc.
+`AGENTS.md` is the entry point for every agent session. It has a short preamble that orients the agent, instructions for using the index, and a generated table with one row per doc.
 
 ```markdown
-This repo contains the authentication service for the platform...
-
-## How to use this index
-
-Load a doc if its description matches the concepts, components, or tasks
-involved in your current work...
-
 | Doc | When to load | Last validated | Paths |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | [Authentication flow](docs/auth-flow.md) | Load when modifying auth, tokens, session handling, or debugging login failures. | 2025-03-01 | `src/auth/**` |
-| [Rate limiting](docs/rate-limiting.md) | Load when modifying rate limit rules, configuring thresholds, or debugging 429 errors. | 2025-02-14 | `src/middleware/rate-limit/**` |
 ```
 
-The table is generated automatically. Humans author only the preamble and the context section. The rest is maintained by automation.
+The table is generated automatically. You author only the preamble.
 
 ### Automation
 
-Two GitHub Actions workflows keep the system current with minimal human involvement.
+Two GitHub Actions workflows keep the system current.
 
-The first workflow, `docs-sync.yml`, triggers whenever a file is added or modified in `docs/`. It calls an LLM to generate or validate the frontmatter fields the automation owns (`title`, `description`, `paths`, and `tags`), then regenerates the AGENTS.md index table. Changes are written back to the repo via a pull request rather than committing directly, so a human sees every automated change before it merges.
+**docs-sync** triggers when a file is added or modified in `docs/`. It calls an LLM to generate or validate frontmatter, then regenerates the AGENTS.md index. Changes come back as a pull request, so a human sees every automated change before it merges.
 
-The second workflow, `docs-staleness.yml`, runs on a daily schedule and on any push that touches code paths tracked in doc frontmatter. It checks two staleness signals for each doc: whether the time since `lastValidated` has exceeded the doc's configured threshold, and whether relevant code paths have changed since the doc was last validated. Flagged docs surface in a pull request with a summary of the staleness reason. A human reviews, validates the affected docs, updates `lastValidated`, and merges. The sync workflow picks up the change and regenerates the index.
+**docs-staleness** runs on a weekly schedule and on any push that touches tracked code paths. It checks two signals per doc: whether the time since `lastValidated` has exceeded the configured threshold, and whether relevant code paths have changed. Flagged docs surface in a pull request. Review, update `lastValidated`, and merge.
 
-## Design principles
+## Design decisions
 
-Several explicit decisions shaped the system.
+**Lazy loading.** Agents load only what they need for the current task. Token usage stays proportional to task complexity, not repo size.
 
-Lazy loading over eager loading. Agents read the index first and load individual docs on demand. This keeps token usage proportional to task complexity rather than repo size. A repo with fifty docs does not cost fifty docs worth of context on every session.
+**Description as trigger condition.** "Load when [conditions]" drives a load-or-skip decision. A topic summary doesn't.
 
-Description as trigger, not summary. The `description` field is written as a load condition: "Load when [conditions]." This is a small but important distinction. A summary describes content; a trigger condition drives a load-or-skip decision. The latter is what enables reliable lazy loading.
+**Automation generates, humans validate.** The LLM generates `title`, `description`, `paths`, and `tags` on doc creation. It never overwrites them after that and never touches `lastValidated` or `maxAgeDays`. Those belong to humans.
 
-Automation owns generation, humans own validation. The LLM generates `title`, `description`, `paths`, and `tags` on doc creation. It never overwrites them after that, and it never touches `lastValidated` or `maxAgeDays`. Those fields belong to humans. This division means the system can run without human involvement for routine changes while keeping humans in the loop for anything that affects accuracy.
+**Provider-agnostic.** Swapping LLM providers requires changing two environment variables, not rewriting scripts.
 
-Provider-agnostic by design. The LLM call is abstracted behind a thin wrapper that maps to either the Anthropic Messages API or any OpenAI-compatible endpoint. Swapping providers requires changing two environment variables, not rewriting scripts.
+**Co-located with code.** Docs live in the repo, show up in pull requests, and go stale on the same timeline as the code.
 
-Co-located with code. Docs live in the repo alongside the code they describe. They appear in pull requests, code reviews, and git history. They go stale on the same timeline as the code. This is a deliberate choice against external wikis, which drift silently because they are not part of the development workflow.
+## Getting started
 
-## What you get
+Copy the following into any repo:
 
-A repo with this system in place gives agents a reliable, low-cost way to orient themselves before starting work. An agent reading AGENTS.md can scan the full index in a fraction of the tokens required to read the underlying docs, then load only what is relevant to the current task.
+- `.github/workflows/docs-sync.yml` and `.github/workflows/docs-staleness.yml`, the two automation workflows.
+- `scripts/`, the Python scripts for index building and staleness checking.
+- `.agentsrc.yaml` with a default staleness threshold.
+- `AGENTS.md` with a preamble.
 
-For humans, the system surfaces documentation gaps in pull requests and keeps freshness visible in a single file.
+No additional configuration required.
 
-The system is designed to be stamped onto new repos with minimal setup: copy two workflow files, copy the scripts directory, add a `.agentsrc.yaml` with a default staleness threshold, and add an `AGENTS.md` with a preamble. No configuration beyond that is required to get the automation running.
+## Tradeoffs
 
-For organizations with multiple repos, the same index-building script can aggregate across repos into a meta-index with a `repo` column prepended to each row. This gives agents working across a codebase a single entry point without requiring a monorepo.
+**Description quality depends on the LLM.** A poorly generated `description` either prevents a relevant doc from loading or loads an irrelevant one. Reviewing generated descriptions on first creation is the strongest safeguard, even if the system is designed to run without it.
 
-## Tradeoffs and open questions
+**`lastValidated` depends on human discipline.** The staleness system surfaces docs that may need attention, but it can't validate them. If the review habit doesn't form, staleness signals eventually become noise.
 
-No system is free. A few honest tradeoffs are worth naming.
-
-Description quality depends on the LLM. A poorly generated `description` either prevents a relevant doc from being loaded or loads an irrelevant one. The prompt design and validation rules mitigate this, but they don't eliminate it. Human review of generated descriptions on first creation is the strongest safeguard, even though the system is designed to not require it.
-
-`lastValidated` depends on human discipline. The staleness system surfaces docs that may need attention, but it cannot validate them. A human has to read the doc, confirm it is accurate, and update the date. If that habit doesn't form, the staleness signals eventually become noise.
-
-The system doesn't scale to very large doc sets without further tooling. At a few dozen docs, scanning the AGENTS.md index is fast and cheap. At several hundred docs, agents may benefit from tag-based or semantic filtering before scanning the full table. That layer is not part of this proposal and would add complexity.
-
-The `description` field is immutable after creation. This is intentional, but it means a doc that is substantially rewritten can have a description that no longer reflects its content. There is currently no automated signal for this. A human editing a doc significantly should review and manually update the description.
+**Scale.** At a few dozen docs, scanning the index is fast and cheap. At several hundred, tag-based or semantic filtering would help. That's out of scope here.
 
 ## Detailed specs
 
-The following documents cover each component of the system in full detail:
-
-- [Frontmatter schema](docs/frontmatter-schema.md) — field definitions, ownership rules, validation logic, and repo-level defaults.
-- [AGENTS.md structure](docs/agents-md-structure.md) — preamble guidance, index table columns, generation rules, and a full annotated example.
-- [Automation workflow](docs/automation-workflow.md) — both GitHub Actions workflows, the shared scripts, failure modes, and the reusable template strategy.
-- [LLM prompt design for Claude Code](docs/llm-prompt-design-claude.md) — Claude Code CI invocation, task prompt structure, tool constraints, and the full prompt text.
-- [LLM prompt design (provider-agnostic)](docs/llm-prompt-design-agnostic.md) — system prompt for a standalone LLM API call, JSON output schema, and few-shot examples. Use as a reference for non-Claude implementations.
+- [Frontmatter schema](docs/frontmatter-schema.md)
+- [AGENTS.md structure](docs/agents-md-structure.md)
+- [Automation workflow](docs/automation-workflow.md)
+- [LLM prompt design for Claude Code](docs/llm-prompt-design-claude.md)
+- [LLM prompt design (provider-agnostic)](docs/llm-prompt-design-agnostic.md)
