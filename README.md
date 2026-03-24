@@ -6,6 +6,16 @@ Most repos have a documentation problem that gets worse as the codebase grows. K
 
 This is a proposal for a lightweight, in-repo documentation system designed to serve both audiences, with no proprietary tooling and minimal maintenance overhead.
 
+I designed it specifically to solve a problem where engineers want to adopt AI in a token-efficient way, but they don’t want to mess around with complicated AGENT.md files, manually maintaining file frontmatter, or setting up skills. So the idea is that they have a standard pattern where they have internal docs in the repo in a `docs/` folder. Coding agents can find the docs, but they often sample all of them and waste tokens. Many teams are also reluctant to adopt new tools or add any sort of overhead.
+
+So, my thinking was to create a very simple system that:
+
+- Let agents use existing in-repo docs in a token-efficient way (using frontmatter that’s pulled into the AGENTS.md file to tell agents which docs to use based on the context).
+- Have a CI/CD workflow that minimizes the effort required of the engineering team to keep the system running. It does this by:
+   - Automatically flagging stale docs
+   - Automatically generating useful descriptions for docs (using an LLM)
+   - Automatically maintaining routing info for all docs in the AGENTS.md file
+
 ## How it works
 
 The system has three parts that work together:
