@@ -20,13 +20,13 @@ the task accurately.
 
 | Doc | When to load | Last validated | Status | Paths |
 |---|---|---|---|---|
-| [AGENTS.md structure](docs/agents-md-structure.md) | Load when editing AGENTS.md preamble, modifying the index table format, or updating build-index.py. | 2026-03-12 | current | `AGENTS.md`<br>`scripts/agents/build-index.py` |
+| [AGENTS.md structure](docs/agents-md-structure.md) | Load when editing AGENTS.md preamble, modifying the index table format, or updating build-index.py. | 2026-03-12 | stale (paths) | `AGENTS.md`<br>`scripts/agents/build-index.py` |
 | [Automation workflow](docs/automation-workflow.md) | Load when modifying GitHub Actions workflows, debugging CI runs, or changing staleness detection logic. | 2026-03-28 | current | `.github/workflows/**`<br>`scripts/agents/**` |
-| [Frontmatter schema](docs/frontmatter-schema.md) | Load when authoring new docs, reviewing frontmatter validation, or modifying the build-index script. | 2026-03-12 | current | `docs/**`<br>`scripts/agents/build-index.py`<br>`.agentsrc.yaml` |
+| [Frontmatter schema](docs/frontmatter-schema.md) | Load when authoring new docs, reviewing frontmatter validation, or modifying the build-index script. | 2026-03-12 | stale (paths) | `docs/**`<br>`scripts/agents/build-index.py`<br>`.agentsrc.yaml` |
 | [Get started](docs/get-started.md) | Load when setting up code-docs in a new repo, migrating existing docs to use frontmatter, or troubleshooting initial configuration. | 2026-03-28 | current | |
 | [How it works](docs/how-it-works.md) | Load when evaluating code-docs for adoption, onboarding to the system, or seeking an end-to-end understanding of the documentation lifecycle. | 2026-03-28 | current | |
 | [LLM prompt design (provider-agnostic)](docs/llm-prompt-design-agnostic.md) | Load when implementing a provider-agnostic LLM layer or porting frontmatter generation to non-Claude providers. | 2026-03-12 | current | |
-| [LLM prompt design for Claude Code](docs/llm-prompt-design-claude.md) | Load when modifying the Claude Code task prompt, adjusting CI frontmatter generation, or debugging LLM output. | 2026-03-12 | current | `.github/agents/**`<br>`.github/workflows/docs-sync.yml` |
+| [LLM prompt design for Claude Code](docs/llm-prompt-design-claude.md) | Load when modifying the Claude Code task prompt, adjusting CI frontmatter generation, or debugging LLM output. | 2026-03-12 | stale (paths) | `.github/agents/**`<br>`.github/workflows/docs-sync.yml` |
 
 <!-- AGENTS-INDEX-END -->
 
