@@ -38,6 +38,9 @@ jobs:
           python scripts/agents/check-staleness.py --dry-run > staleness-output.json
           if [ -s staleness-output.json ] && [ "$(cat staleness-output.json)" != "[]" ]; then
             echo "has_stale=true" >> "$GITHUB_OUTPUT"
+            echo "report<<STALENESS_EOF" >> "$GITHUB_OUTPUT"
+            cat staleness-output.json >> "$GITHUB_OUTPUT"
+            echo "STALENESS_EOF" >> "$GITHUB_OUTPUT"
             echo "Stale docs found:"
             cat staleness-output.json
           else
@@ -61,7 +64,7 @@ jobs:
             and merge this PR.
 
             ```json
-            $(cat staleness-output.json)
+            ${{ steps.staleness.outputs.report }}
             ```
           branch: agents/staleness-${{ github.run_id }}
           labels: agents-staleness
