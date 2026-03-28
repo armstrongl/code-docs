@@ -17,7 +17,7 @@ This guide walks through adding code-docs to an existing repo that already has a
 
 The [reusable template strategy](automation-workflow.md#reusable-template-strategy) section in the automation workflow doc has the authoritative file checklist. In summary, you need:
 
-- **Workflows**: `.github/workflows/docs-sync.yml` and `docs-staleness.yml`
+- **Workflows**: `.github/workflows/docs-sync.yml` and `.github/workflows/docs-staleness.yml`
 - **Task prompt**: `.github/agents/frontmatter-prompt.md`
 - **Scripts**: `scripts/agents/` (all three files: `build-index.py`, `check-staleness.py`, `frontmatter.py`)
 - **Dependencies**: `requirements.txt` (`PyYAML >= 6.0`)
@@ -30,7 +30,7 @@ After copying, two things need attention:
 
 **GitHub Actions secret.** Add `ANTHROPIC_API_KEY` to your repo's GitHub Actions secrets (Settings > Secrets and variables > Actions). The `docs-sync.yml` workflow uses this to call Claude Code for frontmatter generation.
 
-**Staleness trigger paths.** Open `docs-staleness.yml` and update the `push.paths` section to include your repo's actual code paths (e.g., `src/**`, `lib/**`). Without this, the workflow only performs time-based staleness checks — it won't detect when code changes make a doc stale.
+**Staleness trigger paths.** Open `.github/workflows/docs-staleness.yml` and update the `push.paths` section to include your repo's actual code paths (e.g., `src/**`, `lib/**`). Without this, the workflow only performs time-based staleness checks — it won't detect when code changes make a doc stale.
 
 ## Configure
 
@@ -83,7 +83,7 @@ The other four fields (`title`, `description`, `paths`, `tags`) are LLM-owned. Y
 
 The `description` field is the most important. Write it as a trigger condition starting with "Load when", not a topic summary. Keep it under 160 characters.
 
-For docs that don't map to specific code paths (architectural overviews, onboarding guides, process docs), omit the `paths` field entirely. Staleness detection will use time-based checks only.
+For docs that don't map to specific code paths (architectural overviews, onboarding guides, process docs), set `paths: []` to indicate there are no code paths. Staleness detection will use time-based checks only. If you omit `paths`, automation may add `paths: []` for you.
 
 ### Automated: let docs-sync generate frontmatter
 

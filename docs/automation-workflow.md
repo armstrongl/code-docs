@@ -1,6 +1,6 @@
 ---
 description: "Load when modifying GitHub Actions workflows, debugging CI runs, or changing staleness detection logic."
-lastValidated: "2026-03-28"
+lastValidated: "2026-03-12"
 maxAgeDays: 90
 paths:
   - ".github/workflows/**"
@@ -165,7 +165,7 @@ All scripts accept a `--dry-run` flag that prints intended changes without writi
 
 To stamp this system onto a new repo:
 
-1. Copy `.github/workflows/docs-sync.yml` and `docs-staleness.yml`.
+1. Copy `.github/workflows/docs-sync.yml` and `.github/workflows/docs-staleness.yml`.
 2. Copy `.github/agents/frontmatter-prompt.md` (the task prompt used by the docs-sync workflow).
 3. Copy `scripts/agents/` in its entirety.
 4. Copy `requirements.txt`.
