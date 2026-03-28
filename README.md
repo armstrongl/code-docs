@@ -96,7 +96,14 @@ No additional configuration required.
 
 **Scale.** At a few dozen docs, scanning the index is fast and cheap. At several hundred, tag-based or semantic filtering would help. That's out of scope here.
 
-## Detailed specs
+## Documentation
+
+### Guides
+
+- [How it works](docs/how-it-works.md) — end-to-end walkthrough of the system lifecycle
+- [Get started](docs/get-started.md) — add code-docs to an existing repo
+
+### Detailed specs
 
 - [Frontmatter schema](docs/frontmatter-schema.md)
 - [AGENTS.md structure](docs/agents-md-structure.md)

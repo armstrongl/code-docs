@@ -1,6 +1,6 @@
 ---
 description: "Load when modifying GitHub Actions workflows, debugging CI runs, or changing staleness detection logic."
-lastValidated: "2026-03-12"
+lastValidated: "2026-03-28"
 maxAgeDays: 90
 paths:
   - ".github/workflows/**"
@@ -17,8 +17,6 @@ title: "Automation workflow"
 
 This system uses two discrete GitHub Actions workflows. The first keeps frontmatter and the AGENTS.md index in sync whenever a doc changes. The second detects stale docs on a schedule and when relevant code paths change. Both workflows write their changes back to the repo via pull requests rather than committing directly to any branch.
 
----
-
 ## Overview
 
 | Workflow | File | Trigger | Responsibility |
@@ -29,8 +27,6 @@ This system uses two discrete GitHub Actions workflows. The first keeps frontmat
 The two workflows are intentionally decoupled. `docs-sync.yml` owns content accuracy. `docs-staleness.yml` owns freshness signaling. This separation means a failing LLM call in sync never blocks a staleness check, and vice versa.
 
 Both workflows delegate their logic to scripts in a `scripts/agents/` directory. Keeping logic out of YAML makes it testable locally and reusable across repos.
-
----
 
 ## Workflow 1: `docs-sync.yml`
 
@@ -69,8 +65,6 @@ The workflow opens a PR using the `peter-evans/create-pull-request` action. The 
 - Is labeled `agents-sync` for easy filtering.
 
 If a PR with this label already exists for the branch, the action updates it rather than opening a duplicate.
-
----
 
 ## Workflow 2: `docs-staleness.yml`
 
@@ -117,8 +111,6 @@ The staleness workflow opens a PR targeting `main` (not the triggering branch). 
 
 The PR is a notification mechanism. A human reviews it, validates the flagged docs, updates `lastValidated` in the relevant frontmatter, and merges. The `docs-sync.yml` workflow then picks up the frontmatter change and regenerates the index.
 
----
-
 ## Provider-agnostic LLM layer
 
 The scripts call a thin wrapper (`scripts/agents/llm.py`) that abstracts the LLM provider. The wrapper reads two environment variables:
@@ -144,8 +136,6 @@ defaults:
 
 Secrets are stored as GitHub Actions secrets (`AGENTS_LLM_API_KEY`) and never committed to the repo.
 
----
-
 ## Shared tooling
 
 Both workflows call scripts in `scripts/agents/`. The scripts and their responsibilities are:
@@ -159,8 +149,6 @@ Both workflows call scripts in `scripts/agents/`. The scripts and their responsi
 
 All scripts accept a `--dry-run` flag that prints intended changes without writing them. This makes local testing straightforward without needing to stub the LLM.
 
----
-
 ## Failure modes and guards
 
 **LLM call fails:** The frontmatter script catches API errors and writes a `status: llm-error` field to the affected doc's frontmatter. The index regeneration step still runs and reflects the error status in AGENTS.md. The PR is still opened so a human can see which file failed.
@@ -173,17 +161,17 @@ All scripts accept a `--dry-run` flag that prints intended changes without writi
 
 **Rate limiting:** The frontmatter script processes changed files sequentially with a configurable delay between calls (`AGENTS_LLM_DELAY_MS`, default 500ms). For repos with many simultaneous doc changes, this prevents bursting the API.
 
----
-
 ## Reusable template strategy
 
 To stamp this system onto a new repo:
 
 1. Copy `.github/workflows/docs-sync.yml` and `docs-staleness.yml`.
-2. Copy `scripts/agents/` in its entirety.
-3. Add `.agentsrc.yaml` to the repo root and set `defaults.maxAgeDays` and `llm` config.
-4. Add `AGENTS_LLM_API_KEY` to the repo's GitHub Actions secrets.
-5. Create the `docs/` directory and add an initial `AGENTS.md`.
+2. Copy `.github/agents/frontmatter-prompt.md` (the task prompt used by the docs-sync workflow).
+3. Copy `scripts/agents/` in its entirety.
+4. Copy `requirements.txt`.
+5. Add `.agentsrc.yaml` to the repo root and set `defaults.maxAgeDays`. The `llm:` block is optional and only needed if using the provider-agnostic LLM layer described above.
+6. Add `ANTHROPIC_API_KEY` to the repo's GitHub Actions secrets. This is the secret name used by `docs-sync.yml` for the Claude Code implementation. If using the provider-agnostic LLM layer instead, the secret name is `AGENTS_LLM_API_KEY`.
+7. Create the `docs/` directory (if it doesn't already exist) and add an initial `AGENTS.md` with boundary markers (`<!-- AGENTS-INDEX-START -->` and `<!-- AGENTS-INDEX-END -->`).
 
 No other configuration is required. The push trigger paths in `docs-staleness.yml` should be updated to reflect the repo's actual code paths, but the workflow runs safely without them (it will only perform time-based checks until paths are configured).
 

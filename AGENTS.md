@@ -19,11 +19,48 @@ the task accurately.
 <!-- AGENTS-INDEX-START -->
 
 | Doc | When to load | Last validated | Status | Paths |
-| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | -------------- | ------- | ------------------------------------------------------------------------- |
+|---|---|---|---|---|
 | [AGENTS.md structure](docs/agents-md-structure.md) | Load when editing AGENTS.md preamble, modifying the index table format, or updating build-index.py. | 2026-03-12 | current | `AGENTS.md`<br>`scripts/agents/build-index.py` |
-| [Automation workflow](docs/automation-workflow.md) | Load when modifying GitHub Actions workflows, debugging CI runs, or changing staleness detection logic. | 2026-03-12 | current | `.github/workflows/**`<br>`scripts/agents/**` |
+| [Automation workflow](docs/automation-workflow.md) | Load when modifying GitHub Actions workflows, debugging CI runs, or changing staleness detection logic. | 2026-03-28 | current | `.github/workflows/**`<br>`scripts/agents/**` |
 | [Frontmatter schema](docs/frontmatter-schema.md) | Load when authoring new docs, reviewing frontmatter validation, or modifying the build-index script. | 2026-03-12 | current | `docs/**`<br>`scripts/agents/build-index.py`<br>`.agentsrc.yaml` |
-| [LLM prompt design (provider-agnostic)](docs/llm-prompt-design-agnostic.md) | Load when implementing a provider-agnostic LLM layer or porting frontmatter generation to non-Claude providers. | 2026-03-12 | current |  |
+| [Get started](docs/get-started.md) | Load when setting up code-docs in a new repo, migrating existing docs to use frontmatter, or troubleshooting initial configuration. | 2026-03-28 | current | |
+| [How it works](docs/how-it-works.md) | Load when evaluating code-docs for adoption, onboarding to the system, or seeking an end-to-end understanding of the documentation lifecycle. | 2026-03-28 | current | |
+| [LLM prompt design (provider-agnostic)](docs/llm-prompt-design-agnostic.md) | Load when implementing a provider-agnostic LLM layer or porting frontmatter generation to non-Claude providers. | 2026-03-12 | current | |
 | [LLM prompt design for Claude Code](docs/llm-prompt-design-claude.md) | Load when modifying the Claude Code task prompt, adjusting CI frontmatter generation, or debugging LLM output. | 2026-03-12 | current | `.github/agents/**`<br>`.github/workflows/docs-sync.yml` |
 
 <!-- AGENTS-INDEX-END -->
+
+
+## vexp <!-- vexp v1.2.30 -->
+
+**MANDATORY: use `run_pipeline` — do NOT grep or glob the codebase.**
+vexp returns pre-indexed, graph-ranked context in a single call.
+
+### Workflow
+1. `run_pipeline` with your task description — ALWAYS FIRST (replaces all other tools)
+2. Make targeted changes based on the context returned
+3. `run_pipeline` again only if you need more context
+
+### Available MCP tools
+- `run_pipeline` — **PRIMARY TOOL**. Runs capsule + impact + memory in 1 call.
+  Auto-detects intent. Includes file content. Example: `run_pipeline({ "task": "fix auth bug" })`
+- `get_context_capsule` — lightweight, for simple questions only
+- `get_impact_graph` — impact analysis of a specific symbol
+- `search_logic_flow` — execution paths between functions
+- `get_skeleton` — compact file structure
+- `index_status` — indexing status
+- `get_session_context` — recall observations from sessions
+- `search_memory` — cross-session search
+- `save_observation` — persist insights (prefer run_pipeline's observation param)
+
+### Agentic search
+- Do NOT use built-in file search, grep, or codebase indexing — always call `run_pipeline` first
+- If you spawn sub-agents or background tasks, pass them the context from `run_pipeline`
+  rather than letting them search the codebase independently
+
+### Smart Features
+Intent auto-detection, hybrid ranking, session memory, auto-expanding budget.
+
+### Multi-Repo
+`run_pipeline` auto-queries all indexed repos. Use `repos: ["alias"]` to scope. Run `index_status` to see aliases.
+<!-- /vexp -->
