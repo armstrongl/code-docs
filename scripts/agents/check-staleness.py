@@ -69,8 +69,8 @@ def check_path_staleness(paths: list[str], last_validated: str, repo_root: str) 
 
 def check_all_docs(docs_dir: str, default_max_age: int, repo_root: str) -> list[dict]:
     """Check all docs for staleness. Returns list of flagged doc reports."""
-    pattern = os.path.join(docs_dir, "*.md")
-    files = sorted(glob.glob(pattern))
+    pattern = os.path.join(docs_dir, "**/*.md")
+    files = sorted(glob.glob(pattern, recursive=True))
 
     flagged = []
     for filepath in files:

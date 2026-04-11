@@ -85,13 +85,15 @@ def build_index_table(docs_dir: str, staleness_data: dict | None = None) -> str:
     if staleness_data is None:
         staleness_data = {}
 
-    pattern = os.path.join(docs_dir, "*.md")
-    files = sorted(glob.glob(pattern))
+    pattern = os.path.join(docs_dir, "**/*.md")
+    files = sorted(glob.glob(pattern, recursive=True))
 
     rows = []
     for filepath in files:
         fm = parse_frontmatter(filepath)
         if not fm:
+            continue
+        if not fm.get("lastValidated"):
             continue
         # Use path relative to repo root (parent of docs_dir)
         rel_path = os.path.relpath(filepath, os.path.dirname(docs_dir))
